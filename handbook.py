@@ -14,11 +14,45 @@ NOTE: We do not expect you to come up with a perfect solution. We are more inter
 in how you would approach a problem like this.
 """
 import json
+from tkinter import ALL
+from typing import Dict, List
 
 # NOTE: DO NOT EDIT conditions.json
 with open("./conditions.json") as f:
-    CONDITIONS = json.load(f)
+    CONDITIONS: Dict = json.load(f)
     f.close()
+
+ALL_COURSES = list()
+
+class Subject(object):
+    def __init__(self, name: str, dirty_reqs: str) -> None:
+        self.name = name
+        self.reqs = self.parse_reqs(dirty_reqs)
+
+    @staticmethod
+    def parse_reqs(dirty_reqs: str) -> List['Requirement']:
+        pass
+
+    def is_unlocked(self, courses_list: List[str]) -> bool:
+        uoc = len(courses_list) * 6
+        for req in self.reqs:
+            pass
+
+class Requirement(object):
+    """
+    A requirement which could be atomic, or (recursively) contain requirement/s. Ex:
+        COMP1511
+        Req()
+    """
+    def __init__(self) -> None:
+        self.uoc = None
+        pass
+
+    def req_met(self, uoc_done: int, courses_list: List[str]):
+        if self.uoc is not None:
+            if uoc_done < self.uoc:
+                return False
+        
 
 def is_unlocked(courses_list, target_course):
     """Given a list of course codes a student has taken, return true if the target_course 
@@ -34,7 +68,10 @@ def is_unlocked(courses_list, target_course):
     
     return True
 
-
+if __name__ == "__main__":
+    # print(CONDITIONS)
+    for name, dirty_reqs in CONDITIONS.items():
+        ALL_COURSES.append(Subject(name, dirty_reqs))
 
 
 
