@@ -4,8 +4,33 @@ You may add your own tests if you would like.
 """
 from handbook import is_unlocked
 
-def test_empty():
+def test_no_reqs():
     assert is_unlocked([], "COMP1511") == True
+    
+def test_single_reqs():
+    assert is_unlocked([], "COMP3153") == False
+    assert is_unlocked(["MATH1081"], "COMP3153") == True
+    
+    assert is_unlocked(["COMP1511"], "COMP4952") == False
+    assert is_unlocked(["COMP4951"], "COMP4952") == True
+
+def test_simple_OR_AND():
+    assert is_unlocked([], "COMP1521") == False
+    assert is_unlocked(["MATH1081", "ENGG1000"], "COMP1521") == False
+    assert is_unlocked(["COMP1511"], "COMP1521") == True
+    assert is_unlocked(["COMP1511", "COMP2521"], "COMP1521") == True
+    assert is_unlocked(["MATH1081", "ENGG1000", "COMP1911"], "COMP1521") == True
+    
+    assert is_unlocked([], "COMP2511") == False
+    assert is_unlocked(["COMP1531"], "COMP2511") == False
+    assert is_unlocked(["COMP2521", "MATH1241"], "COMP2511") == False
+    assert is_unlocked(["COMP1531", "COMP1927"], "COMP2511") == True
+    assert is_unlocked(["COMP1531", "ENGG1000", "COMP2521"], "COMP2511") == True
+    
+##############################################################
+
+def test_empty():
+    # assert is_unlocked([], "COMP1511") == True
     assert is_unlocked([], "COMP9301") == False
 
 def test_single():
