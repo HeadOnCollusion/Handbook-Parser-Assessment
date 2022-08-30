@@ -16,7 +16,6 @@ in how you would approach a problem like this.
 import json, re
 from typing import Dict, List, Optional
 from enum import Enum
-from test_handbook import *
 
 # NOTE: DO NOT EDIT conditions.json
 with open("./conditions.json") as f:
@@ -38,6 +37,14 @@ class Subject(object):
             return COMP3153_req
         elif name == 'COMP4952':
             return COMP4952_req
+        elif name == 'COMP4128':
+            return COMP4128_req
+        elif name == 'COMP4601':
+            return COMP4601_req
+        elif name == 'COMP9302':
+            return COMP9302_req
+        elif name == 'COMP9491':
+            return COMP9491_req
         else:
             return RequirementNode(NodeType.LEAF)
 
@@ -90,30 +97,26 @@ class RequirementNode(object):
     def req_met(self, courses_list: List[str], uoc_done) -> bool:
         if self.type == NodeType.LEAF:
             if self.pre_subj is None:
+                # print(f'{uoc_done=}, {self.uoc=}, {vars(self)=}')
                 return uoc_done >= self.uoc
             elif m := re.fullmatch(r'[A-Z]{4}[1-9]?', self.pre_subj):
-                return len([lambda c_name: re.fullmatch(m.group(0), c_name), courses_list]) * 6 >= self.uoc
+                # print(f'{[c_name for c_name in courses_list if re.match(m.group(0), c_name) is not None]}, {self.uoc=}')
+                return len([c_name for c_name in courses_list if re.match(m.group(0), c_name) is not None]) * 6 >= self.uoc
             else:
                 return self.pre_subj in courses_list
         elif self.type == NodeType.AND:
             return all(child.req_met(courses_list, uoc_done) for child in self.children)
+        # OR node
+        elif self.uoc > 0:
+            return sum(6 for child in self.children if child.req_met(courses_list, uoc_done)) >= self.uoc
         else:
             return any(child.req_met(courses_list, uoc_done) for child in self.children)
         
-COMP1511 = RequirementNode(NodeType.LEAF, pre_subj="COMP1511")
-COMP1531 = RequirementNode(NodeType.LEAF, pre_subj="COMP1531")
-COMP1911 = RequirementNode(NodeType.LEAF, pre_subj="COMP1911")
-COMP1917 = RequirementNode(NodeType.LEAF, pre_subj="COMP1917")
-COMP1927 = RequirementNode(NodeType.LEAF, pre_subj="COMP1927")
-COMP2521 = RequirementNode(NodeType.LEAF, pre_subj="COMP2521")
-DPST1091 = RequirementNode(NodeType.LEAF, pre_subj="DPST1091")
-
-COMP2511_reqA = RequirementNode(NodeType.OR, children=[COMP1927, COMP2521])
-
-COMP1521_req = RequirementNode(NodeType.OR, children=[COMP1511, DPST1091, COMP1911, COMP1917])
-COMP2511_req = RequirementNode(NodeType.AND, children=[COMP1531, COMP2511_reqA])
-COMP3153_req = RequirementNode(NodeType.LEAF, pre_subj="MATH1081")
-COMP4952_req = RequirementNode(NodeType.LEAF, pre_subj="COMP4951")
+from hard_code_courses import (
+    COMP1521_req, COMP2511_req, COMP3153_req,
+    COMP4128_req, COMP4601_req, COMP4952_req,
+    COMP9302_req, COMP9491_req
+)
 
 all_courses: List[Subject] = list()
 for name, dirty_reqs in CONDITIONS.items():
@@ -132,10 +135,4 @@ def is_unlocked(courses_list, target_course):
     
     target_course_obj: Subject = next(filter(lambda s: s.name == target_course, all_courses))
     return target_course_obj.is_unlocked(courses_list)
-
-if __name__ == '__main__':
-    test_no_reqs()
-    test_single_reqs()
-    test_simple_OR_AND()
-    # test_single()
     
