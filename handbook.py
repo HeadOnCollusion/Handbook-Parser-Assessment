@@ -112,7 +112,7 @@ class RequirementNode(object):
         else:
             return any(child.req_met(courses_list, uoc_done) for child in self.children)
         
-from hard_code_courses import (
+from hardcode_course_reqs import (
     COMP1521_req, COMP2511_req, COMP3153_req,
     COMP4128_req, COMP4601_req, COMP4952_req,
     COMP9302_req, COMP9491_req
