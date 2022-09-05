@@ -1,6 +1,6 @@
 from handbook import RequirementNode, NodeType
 
-def make_leaf(pre_subj: str) -> RequirementNode:
+def make_leaf(pre_subj: str) -> 'RequirementNode':
     return RequirementNode(NodeType.LEAF, pre_subj=pre_subj)
 
 COMP1511 = make_leaf("COMP1511")

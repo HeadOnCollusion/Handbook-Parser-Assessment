@@ -85,7 +85,7 @@ class RequirementNode(object):
     """
     def __init__(self, req_type: NodeType, *, 
                  children: List['RequirementNode']=[],
-                 uoc=0, pre_subj: Optional[str]=None) -> None:
+                 uoc: int=0, pre_subj: Optional[str]=None) -> None:
         if req_type is not NodeType.LEAF:
             assert(pre_subj is None)
             
@@ -115,7 +115,7 @@ class RequirementNode(object):
     def print_req_structure(self, lvl: int=0) -> None:
         print('\t' * lvl, end="")
         if self.type is NodeType.LEAF:
-            print(self.pre_subj)
+            print(self.pre_subj, self.uoc)
         else:
             if self.type is NodeType.AND:
                 print("AND")
@@ -130,9 +130,8 @@ from hardcode_course_reqs import (
     COMP9302_req, COMP9491_req
 )
 
+PARSED = False
 all_courses: List[Subject] = list()
-for name, dirty_reqs in CONDITIONS.items():
-    all_courses.append(Subject(name, dirty_reqs))
 
 def is_unlocked(courses_list, target_course):
     """
@@ -144,6 +143,11 @@ def is_unlocked(courses_list, target_course):
 
     You can assume all courses are worth 6 units of credit
     """
+    global PARSED
+    if not PARSED:
+        for name, dirty_reqs in CONDITIONS.items():
+            all_courses.append(Subject(name, dirty_reqs))
+        PARSED = True
     
     target_course_obj: Subject = next(filter(lambda s: s.name == target_course, all_courses))
     return target_course_obj.is_unlocked(courses_list)

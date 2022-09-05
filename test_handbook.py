@@ -45,6 +45,7 @@ def test_UOC_leaves():
     assert is_unlocked(["COMP1511", "COMP2521", "COMP3821"], "COMP4128") == True
     assert is_unlocked(["COMP1511", "COMP2521", "COMP3121", "COMP3311"], "COMP4128") == True
     print("COMP4128 passed")
+    
     assert is_unlocked(["COMP1511", "COMP1531", "COMP2511"], "COMP4601") == False
     assert is_unlocked(["COMP2911"], "COMP4601") == False
     assert is_unlocked(["COMP1511", "COMP1531", "COMP2521", "COMP2511"], "COMP4601") == True
@@ -56,6 +57,7 @@ def test_UOC_ors():
     assert is_unlocked(["COMP1511", "COMP6841", "COMP6843", "COMP6445"], "COMP9302") == True
     assert is_unlocked(["COMP6841", "COMP2521", "COMP6445", "COMP6447"], "COMP9302") == True
     print("COMP9302 passed")
+    
     assert is_unlocked(["COMP9315", "COMP9417", "COMP9418"], "COMP9491") == False
     assert is_unlocked(["COMP9315", "COMP9417", "COMP9418", "COMP9444"], "COMP9491") == True
     assert is_unlocked(["COMP9418", "COMP9444", "COMP9447"], "COMP9491") == True
@@ -65,22 +67,26 @@ def test_UOC_ors():
 ##############################################################
 
 def test_empty():
-    # assert is_unlocked([], "COMP1511") == True
+    assert is_unlocked([], "COMP1511") == True
     assert is_unlocked([], "COMP9301") == False
+    print("empty passed")
 
 def test_single():
     assert is_unlocked(["MATH1081"], "COMP3153") == True
     assert is_unlocked(["ELEC2141"], "COMP3211") == True
     assert is_unlocked(["COMP1511", "COMP1521", "COMP1531"], "COMP3153") == False
+    print("single passed")
 
 def test_compound():
     assert is_unlocked(["MATH1081", "COMP1511"], "COMP2111") == True
     assert is_unlocked(["COMP1521", "COMP2521"], "COMP3151") == True
     assert is_unlocked(["COMP1917", "DPST1092"], "COMP3151") == False
+    print("compound passed")
 
 def test_simple_uoc():
     assert is_unlocked(["COMP1511", "COMP1521", "COMP1531", "COMP2521"], "COMP4161") == True
     assert is_unlocked(["COMP1511", "COMP1521"], "COMP4161") == False
+    print("simple uoc passed")
 
 def test_annoying_uoc():
     assert is_unlocked(["COMP9417", "COMP9418", "COMP9447"], "COMP9491") == True
@@ -90,15 +96,24 @@ def test_annoying_uoc():
     assert is_unlocked(["COMP3901"], "COMP3902") == False
     assert is_unlocked(["COMP3901", "COMP6441", "COMP6443"], "COMP3902") == False
     assert is_unlocked(["COMP3901", "COMP3441", "COMP3443"], "COMP3902") == True
+    print("annoying uoc passed")
 
 def test_cross_discipline():
     assert is_unlocked(["COMP1911", "MTRN2500"], "COMP2121") == True
     assert is_unlocked(["COMP1521"], "COMP2121") == True
+    print("cross discipline passed")
 
 if __name__ == '__main__':
     test_no_reqs()
     test_single_reqs()
     test_simple_OR_AND()
     test_brackets_OR_AND()
-    # test_UOC_leaves()
-    # test_UOC_ors()
+    test_UOC_leaves()
+    test_UOC_ors()
+    
+    test_empty()
+    test_single()
+    test_compound()
+    test_simple_uoc()
+    test_annoying_uoc()
+    test_cross_discipline()
