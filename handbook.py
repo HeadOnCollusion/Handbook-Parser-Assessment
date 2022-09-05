@@ -27,26 +27,26 @@ class Subject(object):
         self.name = name
         self.reqs_head = self.parse_reqs(dirty_reqs)
 
-    @staticmethod
-    def parse_reqs(dirty_reqs: str) -> 'RequirementNode':
-        if name == 'COMP1521':
-            return COMP1521_req
-        elif name == 'COMP2511':
-            return COMP2511_req
-        elif name == 'COMP3153':
-            return COMP3153_req
-        elif name == 'COMP4952':
-            return COMP4952_req
-        elif name == 'COMP4128':
-            return COMP4128_req
-        elif name == 'COMP4601':
-            return COMP4601_req
-        elif name == 'COMP9302':
-            return COMP9302_req
-        elif name == 'COMP9491':
-            return COMP9491_req
-        else:
-            return RequirementNode(NodeType.LEAF)
+    def parse_reqs(self, dirty_reqs: str) -> 'RequirementNode':
+        from lexer_parser import Parser 
+        # if self.name == 'COMP1521':
+        #     return COMP1521_req
+        # elif self.name == 'COMP2511':
+        #     return COMP2511_req
+        # if self.name == 'COMP3153':
+        #     return COMP3153_req
+        # elif self.name == 'COMP4952':
+        #     return COMP4952_req
+        # elif self.name == 'COMP4128':
+        #     return COMP4128_req
+        # elif self.name == 'COMP4601':
+        #     return COMP4601_req
+        # elif self.name == 'COMP9302':
+        #     return COMP9302_req
+        # elif self.name == 'COMP9491':
+        #     return COMP9491_req
+        # else:
+        return Parser(dirty_reqs).parse()
 
     def is_unlocked(self, courses_list: List[str]) -> bool:
         """
@@ -111,6 +111,18 @@ class RequirementNode(object):
             return sum(6 for child in self.children if child.req_met(courses_list, uoc_done)) >= self.uoc
         else:
             return any(child.req_met(courses_list, uoc_done) for child in self.children)
+
+    def print_req_structure(self, lvl: int=0) -> None:
+        print('\t' * lvl, end="")
+        if self.type is NodeType.LEAF:
+            print(self.pre_subj)
+        else:
+            if self.type is NodeType.AND:
+                print("AND")
+            else:
+                print("OR", self.uoc)
+            for child in self.children:
+                child.print_req_structure(lvl + 1)
         
 from hardcode_course_reqs import (
     COMP1521_req, COMP2511_req, COMP3153_req,

@@ -25,12 +25,20 @@ def test_simple_OR_AND():
     assert is_unlocked(["MATH1081", "ENGG1000", "COMP1911"], "COMP1521") == True
     print("COMP1521 passed")
     
+def test_brackets_OR_AND():
     assert is_unlocked([], "COMP2511") == False
     assert is_unlocked(["COMP1531"], "COMP2511") == False
     assert is_unlocked(["COMP2521", "MATH1241"], "COMP2511") == False
     assert is_unlocked(["COMP1531", "COMP1927"], "COMP2511") == True
     assert is_unlocked(["COMP1531", "ENGG1000", "COMP2521"], "COMP2511") == True
     print("COMP2511 passed")
+    
+    assert is_unlocked([], "COMP3151") == False
+    assert is_unlocked(["COMP1927"], "COMP3151") == True
+    assert is_unlocked(["COMP1511", "COMP2521"], "COMP3151") == False
+    assert is_unlocked(["DPST1092", "COMP1521"], "COMP3151") == False
+    assert is_unlocked(["DPST1092", "COMP2521", "MATH1241"], "COMP3151") == True
+    print("COMP3151 passed")
 
 def test_UOC_leaves():
     assert is_unlocked(["COMP1511", "COMP2521", "COMP3121"], "COMP4128") == False
@@ -91,5 +99,6 @@ if __name__ == '__main__':
     test_no_reqs()
     test_single_reqs()
     test_simple_OR_AND()
-    test_UOC_leaves()
-    test_UOC_ors()
+    test_brackets_OR_AND()
+    # test_UOC_leaves()
+    # test_UOC_ors()
