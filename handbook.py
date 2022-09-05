@@ -28,24 +28,13 @@ class Subject(object):
         self.reqs_head = self.parse_reqs(dirty_reqs)
 
     def parse_reqs(self, dirty_reqs: str) -> 'RequirementNode':
-        from lexer_parser import Parser 
-        # if self.name == 'COMP1521':
-        #     return COMP1521_req
-        # elif self.name == 'COMP2511':
-        #     return COMP2511_req
-        # if self.name == 'COMP3153':
-        #     return COMP3153_req
-        # elif self.name == 'COMP4952':
-        #     return COMP4952_req
-        # elif self.name == 'COMP4128':
-        #     return COMP4128_req
-        # elif self.name == 'COMP4601':
-        #     return COMP4601_req
-        # elif self.name == 'COMP9302':
-        #     return COMP9302_req
-        # elif self.name == 'COMP9491':
-        #     return COMP9491_req
-        # else:
+        # Alternatively, return the hardcoded node trees
+        # from hardcode_course_reqs import (
+        #     COMP1521_req, COMP2511_req, COMP3153_req, COMP4128_req,
+        #     COMP4601_req, COMP4952_req, COMP9302_req, COMP9491_req
+        # )
+
+        from lexer_parser import Parser
         return Parser(dirty_reqs).parse()
 
     def is_unlocked(self, courses_list: List[str]) -> bool:
@@ -97,19 +86,21 @@ class RequirementNode(object):
     def req_met(self, courses_list: List[str], uoc_done) -> bool:
         if self.type == NodeType.LEAF:
             if self.pre_subj is None:
-                # print(f'{uoc_done=}, {self.uoc=}, {vars(self)=}')
+                # Plain uoc check
                 return uoc_done >= self.uoc
             elif m := re.fullmatch(r'[A-Z]{4}[1-9]?', self.pre_subj):
-                # print(f'{[c_name for c_name in courses_list if re.match(m.group(0), c_name) is not None]}, {self.uoc=}')
+                # Uoc check in subject prefix, or a specific level in subject
                 return len([c_name for c_name in courses_list if re.match(m.group(0), c_name) is not None]) * 6 >= self.uoc
             else:
+                # Plain subject check
                 return self.pre_subj in courses_list
         elif self.type == NodeType.AND:
             return all(child.req_met(courses_list, uoc_done) for child in self.children)
-        # OR node
         elif self.uoc > 0:
+            # Check at least X uoc is done within certain group (assuming 6 UOC)
             return sum(6 for child in self.children if child.req_met(courses_list, uoc_done)) >= self.uoc
         else:
+            # Plain OR node
             return any(child.req_met(courses_list, uoc_done) for child in self.children)
 
     def print_req_structure(self, lvl: int=0) -> None:
@@ -123,12 +114,6 @@ class RequirementNode(object):
                 print("OR", self.uoc)
             for child in self.children:
                 child.print_req_structure(lvl + 1)
-        
-from hardcode_course_reqs import (
-    COMP1521_req, COMP2511_req, COMP3153_req,
-    COMP4128_req, COMP4601_req, COMP4952_req,
-    COMP9302_req, COMP9491_req
-)
 
 PARSED = False
 all_courses: List[Subject] = list()

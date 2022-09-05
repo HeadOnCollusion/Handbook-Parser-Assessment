@@ -1,46 +1,8 @@
 import json, re
-from os import stat
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Optional
 
 from handbook import NodeType, RequirementNode
-
-expected = {
-    "COMP1511": "",
-    "COMP1521": "COMP1511 OR DPST1091 OR COMP1911 OR COMP1917",
-    "COMP1531": "COMP1511 OR DPST1091 OR COMP1917 OR COMP1921",
-    "COMP2041": "COMP1511 OR DPST1091 OR COMP1917 OR COMP1921",
-    "COMP2111": "MATH1081 AND ( COMP1511 OR DPST1091 OR COMP1917 OR COMP1921 )",
-    "COMP2121": "COMP1917 OR COMP1921 OR COMP1511 OR DPST1091 OR COMP1521 OR DPST1092 OR ( COMP1911 AND MTRN2500 )",
-    "COMP2511": "COMP1531 AND ( COMP2521 OR COMP1927 )",
-    "COMP2521": "COMP1511 OR DPST1091 OR COMP1917 OR COMP1921",
-    "COMP3121": "COMP1927 OR COMP2521",
-    "COMP3131": "COMP2511 OR COMP2911",
-    "COMP3141": "COMP1927 OR COMP2521",
-    "COMP3151": "COMP1927 OR ( ( COMP1521 OR DPST1092 ) AND COMP2521 )",
-    "COMP3153": "MATH1081",
-    "COMP3161": "COMP2521 OR COMP1927",
-    "COMP3211": "COMP3222 OR ELEC2141",
-    "COMP3900": "COMP1531 AND ( COMP2521 OR COMP1927 ) AND 102UOC",
-    "COMP3901": "12UOC IN COMP1 AND 18UOC IN COMP2",
-    "COMP3902": "COMP3901 AND 12UOC IN COMP3",
-    "COMP4121": "COMP3121 OR COMP3821",
-    "COMP4128": "COMP3821 OR ( COMP3121 AND 12UOC IN COMP3 )",
-    "COMP4141": "MATH1081 AND ( COMP1927 OR COMP2521 )",
-    "COMP4161": "18UOC",
-    "COMP4336": "COMP3331",
-    "COMP4418": "COMP3411",
-    "COMP4601": "( COMP2511 OR COMP2911 ) AND 24UOC",
-    "COMP4951": "36UOC IN COMP",
-    "COMP4952": "COMP4951",
-    "COMP4953": "COMP4952",
-    "COMP9301": "12UOC IN ( COMP6443 OR COMP6843 OR COMP6445 OR COMP6845 OR COMP6447 )",
-    "COMP9302": "( COMP6441 OR COMP6841 ) AND 12UOC IN ( COMP6443 OR COMP6843 OR COMP6445 OR COMP6845 OR COMP6447 )",
-    "COMP9417": "MATH1081 AND ( ( COMP1531 OR COMP2041 ) OR ( COMP1927 OR COMP2521 ) )",
-    "COMP9418": "MATH5836 OR COMP9417",
-    "COMP9444": "COMP1927 OR COMP2521 OR MTRN3500",
-    "COMP9447": "COMP6441 OR COMP6841 OR COMP3441",
-    "COMP9491": "18UOC IN ( COMP9417 OR COMP9418 OR COMP9444 OR COMP9447 )"
-}
+from hardcode_course_reqs import EXPECTED_RE
 
 class Parser(object):
     def __init__(self, whole_req: str):
@@ -68,23 +30,29 @@ class Parser(object):
                 token = next(self.gen_tokens())
                 if token == "(":
                     node = self.parse()
+                    # Check if it's a "\d+UOC IN (COURSE0001 OR COURSE0002)" construction
                     if len(unused_tokens) == 2:
                         assert(m := re.fullmatch(r"(\d+)UOC", unused_tokens[0]))
                         uoc = int(m.group(1))
                         assert(node.type is NodeType.OR)
+                        # Turns out it is. Same as normal OR node, except with non-0 uoc property.
                         node.uoc = uoc
                         unused_tokens = []
+                        
                     tok_buffer.append(node)
                 elif token == ")":
                     break
                 elif len(unused_tokens) == 1 or len(unused_tokens) == 2:
                     dbg(unused_tokens)
-                    Parser.foo(unused_tokens, tok_buffer, token)
+                    Parser.parse_UOC_req(unused_tokens, tok_buffer, token)
                 elif re.fullmatch(r"\d+UOC", token):
+                    # We dont' know yet if it's a lone xUOC, or xUOC in ABCD[1-9]? or xUOC in (GRUP0001 OR ...)
                     unused_tokens.append(token)
                 elif re.fullmatch(r"[A-Z]{4}[1-9][0-9]{3}", token):
                     tok_buffer.append(RequirementNode(NodeType.LEAF, pre_subj=token))
                 elif m := re.fullmatch(r"AND", token):
+                    # Assumes that each layer only has one of AND and OR i.e.
+                    # None of this: "ABC OR DEF AND GHI" -> "ABC OR (DEF AND GHI)" is valid though. 
                     mode = NodeType.AND
                 elif m := re.fullmatch(r"OR", token):
                     mode = NodeType.OR
@@ -92,8 +60,8 @@ class Parser(object):
                 break
         
         if len(unused_tokens) == 1:
-            dbg(f"unused tokens at end")
-            Parser.foo(unused_tokens, tok_buffer)
+            dbg(f"had unused tokens at end")
+            Parser.parse_UOC_req(unused_tokens, tok_buffer)
         else:
             assert(len(unused_tokens) == 0)
         if tok_buffer:
@@ -105,7 +73,7 @@ class Parser(object):
             return RequirementNode(NodeType.LEAF)
 
     @staticmethod
-    def foo(unused_tokens: List[str], tok_buffer: List['RequirementNode'], token: Optional[str]=None):
+    def parse_UOC_req(unused_tokens: List[str], tok_buffer: List['RequirementNode'], token: Optional[str]=None):
         assert(m := re.fullmatch(r"(\d+)UOC", unused_tokens[0]))
         uoc = int(m.group(1))
     
@@ -147,8 +115,8 @@ if __name__ == "__main__":
         f.close()
     for name, dirty_reqs in CONDITIONS.items():
         p = Parser(dirty_reqs)
-        if ' '.join(p.tokens) != expected[name]:
-            raise Exception(f"{name} failed. Expected\n{expected[name]} but got\n{' '.join(p.tokens)}\n")
+        if ' '.join(p.tokens) != EXPECTED_RE[name]:
+            raise Exception(f"{name} failed. Expected\n{EXPECTED_RE[name]} but got\n{' '.join(p.tokens)}\n")
         
         if name:
             print(f"==={name}===")
