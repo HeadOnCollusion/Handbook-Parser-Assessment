@@ -19,8 +19,12 @@ class Parser(object):
         reqs = re.sub(r'\s+', ' ', reqs) # Remove multiple spaces again
         self.tokens = re.sub(r'[.!]*$', r'', reqs.strip()).split()
         self.i = 0
-        
+    
     def parse(self) -> 'RequirementNode':
+        '''
+        Looks at requirements token by token (separated by space) in ONE pass
+        and creates a RequirementNode tree.
+        '''
         tok_buffer: List['RequirementNode'] = []
         unused_tokens: List['str'] = []
         mode: NodeType = NodeType.LEAF
@@ -30,7 +34,7 @@ class Parser(object):
                 token = next(self.gen_tokens())
                 if token == "(":
                     node = self.parse()
-                    # Check if it's a "\d+UOC IN (COURSE0001 OR COURSE0002)" construction
+                    # Check if it's a "xUOC IN (COURSE0001 OR COURSE0002)" construction
                     if len(unused_tokens) == 2:
                         assert(m := re.fullmatch(r"(\d+)UOC", unused_tokens[0]))
                         uoc = int(m.group(1))
@@ -64,10 +68,13 @@ class Parser(object):
             Parser.parse_UOC_req(unused_tokens, tok_buffer)
         else:
             assert(len(unused_tokens) == 0)
+            
         if tok_buffer:
             if len(tok_buffer) == 1:
+                # Leaf node
                 return tok_buffer[0]
             else:
+                # AND/OR node with multiple children
                 return RequirementNode(mode, children=tok_buffer)
         else:
             return RequirementNode(NodeType.LEAF)
@@ -82,19 +89,24 @@ class Parser(object):
                 unused_tokens.append(token)
                 return
             
-            if token is None:
-                pass
-            else:    
-                assert(token == "AND" or token == "OR")           
+            # An AND/OR/None (end of requirement string) token terminates a lone xUOC token
+            assert(token == "AND" or token == "OR" or token is None)           
             tok_buffer.append(RequirementNode(NodeType.LEAF, uoc=uoc))
             unused_tokens = []
         else:
-            if not (token and re.match(r'[A-Z]{4}\d{0,3}', token)):
+            # Dealing with a xUOC IN ABCD[1-9]? construction here
+            # xUOC IN (GRUP0001 OR ...) is handled with the brackets logic
+            assert(len(unused_tokens) == 2)
+            if not (token and re.match(r'[A-Z]{4}\d{0,1}', token)):
                 print(f"unexpectedly got {token=}")
             tok_buffer.append(RequirementNode(NodeType.LEAF, uoc=uoc, pre_subj=token))
             unused_tokens.clear()
         
     def gen_tokens(self):
+        '''
+        Yields the tokens of the requirement string one by one in ONE pass
+        global of any recursive calls of parse().
+        '''
         while True:
             try:
                 yield self.tokens[self.i]
