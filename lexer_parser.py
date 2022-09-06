@@ -25,9 +25,9 @@ class Parser(object):
         Looks at requirements token by token (separated by space) in ONE pass
         and creates a RequirementNode tree.
         '''
-        tok_buffer: List['RequirementNode'] = []
-        unused_tokens: List['str'] = []
-        mode: NodeType = NodeType.LEAF
+        tok_buffer = []
+        unused_tokens = []
+        mode = NodeType.LEAF
         
         while True:
             try:
@@ -36,7 +36,8 @@ class Parser(object):
                     node = self.parse()
                     # Check if it's a "xUOC IN (COURSE0001 OR COURSE0002)" construction
                     if len(unused_tokens) == 2:
-                        assert(m := re.fullmatch(r"(\d+)UOC", unused_tokens[0]))
+                        m = re.fullmatch(r"(\d+)UOC", unused_tokens[0])
+                        assert(m)
                         uoc = int(m.group(1))
                         assert(node.type is NodeType.OR)
                         # Turns out it is. Same as normal OR node, except with non-0 uoc property.
@@ -54,17 +55,17 @@ class Parser(object):
                     unused_tokens.append(token)
                 elif re.fullmatch(r"[A-Z]{4}[1-9][0-9]{3}", token):
                     tok_buffer.append(RequirementNode(NodeType.LEAF, pre_subj=token))
-                elif m := re.fullmatch(r"AND", token):
+                elif re.fullmatch(r"AND", token):
                     # Assumes that each layer only has one of AND and OR i.e.
                     # None of this: "ABC OR DEF AND GHI" -> "ABC OR (DEF AND GHI)" is valid though. 
                     mode = NodeType.AND
-                elif m := re.fullmatch(r"OR", token):
+                elif re.fullmatch(r"OR", token):
                     mode = NodeType.OR
             except StopIteration:
                 break
         
         if len(unused_tokens) == 1:
-            dbg(f"had unused tokens at end")
+            dbg("had unused tokens at end")
             Parser.parse_UOC_req(unused_tokens, tok_buffer)
         else:
             assert(len(unused_tokens) == 0)
@@ -81,7 +82,8 @@ class Parser(object):
 
     @staticmethod
     def parse_UOC_req(unused_tokens: List[str], tok_buffer: List['RequirementNode'], token: Optional[str]=None):
-        assert(m := re.fullmatch(r"(\d+)UOC", unused_tokens[0]))
+        m = re.fullmatch(r"(\d+)UOC", unused_tokens[0])
+        assert(m)
         uoc = int(m.group(1))
     
         if len(unused_tokens) == 1:
@@ -98,7 +100,7 @@ class Parser(object):
             # xUOC IN (GRUP0001 OR ...) is handled with the brackets logic
             assert(len(unused_tokens) == 2)
             if not (token and re.match(r'[A-Z]{4}\d{0,1}', token)):
-                print(f"unexpectedly got {token=}")
+                print("unexpectedly got token=%s" % token)
             tok_buffer.append(RequirementNode(NodeType.LEAF, uoc=uoc, pre_subj=token))
             unused_tokens.clear()
         
@@ -123,14 +125,14 @@ def dbg(*args: object):
 if __name__ == "__main__":
     DBG = True
     with open("./conditions.json") as f:
-        CONDITIONS: Dict = json.load(f)
+        CONDITIONS = json.load(f)
         f.close()
     for name, dirty_reqs in CONDITIONS.items():
         p = Parser(dirty_reqs)
         if ' '.join(p.tokens) != EXPECTED_RE[name]:
-            raise Exception(f"{name} failed. Expected\n{EXPECTED_RE[name]} but got\n{' '.join(p.tokens)}\n")
+            raise Exception("%s failed. Expected\n%s but got\n%s\n" % name, EXPECTED_RE[name], ' '.join(p.tokens))
         
         if name:
-            print(f"==={name}===")
+            print("===%s===" % name)
             p.parse().print_req_structure()
             

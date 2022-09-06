@@ -19,7 +19,7 @@ from enum import Enum
 
 # NOTE: DO NOT EDIT conditions.json
 with open("./conditions.json") as f:
-    CONDITIONS: Dict = json.load(f)
+    CONDITIONS = json.load(f)
     f.close()
 
 class Subject(object):
@@ -88,8 +88,9 @@ class RequirementNode(object):
             if self.pre_subj is None:
                 # Plain uoc check
                 return uoc_done >= self.uoc
-            elif m := re.fullmatch(r'[A-Z]{4}[1-9]?', self.pre_subj):
+            elif re.fullmatch(r'[A-Z]{4}[1-9]?', self.pre_subj):
                 # Uoc check in subject prefix, or a specific level in subject
+                m = re.fullmatch(r'[A-Z]{4}[1-9]?', self.pre_subj)
                 return len([c_name for c_name in courses_list if re.match(m.group(0), c_name) is not None]) * 6 >= self.uoc
             else:
                 # Plain subject check
@@ -116,7 +117,7 @@ class RequirementNode(object):
                 child.print_req_structure(lvl + 1)
 
 PARSED = False
-all_courses: List[Subject] = list()
+all_courses = []
 
 def is_unlocked(courses_list, target_course):
     """
@@ -134,6 +135,6 @@ def is_unlocked(courses_list, target_course):
             all_courses.append(Subject(name, dirty_reqs))
         PARSED = True
     
-    target_course_obj: Subject = next(filter(lambda s: s.name == target_course, all_courses))
+    target_course_obj = next(filter(lambda s: s.name == target_course, all_courses))
     return target_course_obj.is_unlocked(courses_list)
     
